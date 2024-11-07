@@ -1,0 +1,219 @@
+import { useState } from 'react';
+import { Settings2, LayoutDashboard } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
+function App() {
+  const [currentView, setCurrentView] = useState<'dashboard' | 'setup'>('dashboard');
+  const [jsonContent, setJsonContent] = useState<string>('');
+
+  // Mock data for demonstration
+  const defaultTemplateFields = [
+    { path: 'name', type: 'string', example: 'John Doe' },
+    { path: 'email', type: 'string', example: 'john@example.com' },
+    { path: 'age', type: 'number', example: '30' }
+  ];
+
+  const handleJsonTransformed = (content: string) => {
+    setJsonContent(content);
+  };
+
+  const handleSFTPUpload = async (content: string) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/sftp/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          filename: `transform_${new Date().toISOString()}.json`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      alert('File uploaded successfully!');
+    } catch (error) {
+      alert('Failed to upload file: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
+  const renderSetupView = () => (
+    <Card className="max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>CSV to JSON Transformer Setup</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {/* File Upload Section */}
+          <div className="border-2 border-dashed rounded-lg p-8 text-center">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              id="file-upload"
+            />
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer block"
+            >
+              <span className="text-gray-600">
+                Click to upload or drag and drop
+              </span>
+            </label>
+          </div>
+
+          {/* SFTP Configuration */}
+          {jsonContent && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">SFTP Configuration</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Host"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="Port"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Username"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  className="p-2 border rounded"
+                />
+              </div>
+              <button
+                onClick={() => handleSFTPUpload(jsonContent)}
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Save Configuration
+              </button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderDashboardView = () => (
+    <Tabs defaultValue="upload" className="w-full">
+      <TabsList>
+        <TabsTrigger value="upload">Upload Files</TabsTrigger>
+        <TabsTrigger value="history">Upload History</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="upload">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload CSV File</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Template Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Mapping Template
+                </label>
+                <select className="w-full p-2 border rounded">
+                  <option>Choose a template...</option>
+                  <option>Template 1</option>
+                  <option>Template 2</option>
+                </select>
+              </div>
+
+              {/* File Upload */}
+              <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  id="dashboard-file-upload"
+                />
+                <label
+                  htmlFor="dashboard-file-upload"
+                  className="cursor-pointer block"
+                >
+                  <span className="text-gray-600">
+                    Click to upload or drag and drop
+                  </span>
+                </label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="history">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center text-gray-500 py-8">
+              No upload history available
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <span className="text-xl font-bold text-blue-600">CSV Transformer</span>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className={`${
+                    currentView === 'dashboard'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Operations Dashboard
+                </button>
+                <button
+                  onClick={() => setCurrentView('setup')}
+                  className={`${
+                    currentView === 'setup'
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Configuration Setup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {currentView === 'dashboard' ? renderDashboardView() : renderSetupView()}
+      </main>
+    </div>
+  );
+}
+
+export default App;

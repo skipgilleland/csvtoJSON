@@ -1,0 +1,12 @@
+{
+    "dev": {
+      "driver": "pg",
+      "user": "postgres",
+      "password": "Cameron5!",
+      "host": "localhost",
+      "database": "csv_transformer",
+      "port": 5432,
+      "schema": "public"
+    },
+    "sql-file": true
+  }
